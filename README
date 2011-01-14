@@ -2,6 +2,12 @@
 
 URL shortener in clojure.
 
+## HTTP API
+
+Make a POST to  /shorten like "url=http://google.com" and will receive the shortened url.
+Make a GET to the shortened url to be redirected (301 + Location header).
+Make a GET to /resolver/url , and url here is the shortpart to receive where is points to.
+
 ## License
 
 Copyright (C) 2010 diogok

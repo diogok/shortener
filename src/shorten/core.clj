@@ -1,4 +1,5 @@
-(ns shorten.core)
+(ns shorten.core
+ (:use compojure.core ring.adapter.jetty))
 
     (defn inc-next-1 [nums & b]
      (if (nil? (first nums)) (into b [0]) 
@@ -35,5 +36,20 @@
     (defn unshorten [short-url]
      (get @short-to-long short-url)) 
 
+    (def server (atom nil)) 
+    (def conf   (atom nil)) 
+
+    (defroutes app 
+     (GET  "/resolve/:url" [url] (let [short-url url] (unshorten short-url) ) )
+     (GET  "/:url" [url] (let [short-url url] {:status 301 :headers {"Location" (unshorten short-url) }} ))
+     (POST "/shorten" [url] (let [long-url url](str "http://" (@conf :host) ":" (@conf :port) "/" (shorten long-url) )))) 
+
+    (defn -main [& options]
+     (let [ host (if (:host options) (options :host) "localhost")
+            port (if (:port options) (Integer/parseInt (options :port) ) 8080)
+            config {:host host :port port :join? false} ] 
+     (if-not (nil? @server) (.stop @server))
+     (swap! conf (fn [c] config)) 
+     (swap! server (fn [s] (run-jetty app config )))))
 
 
