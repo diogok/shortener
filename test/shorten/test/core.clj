@@ -37,3 +37,4 @@
      (time (dotimes [n 99999] (shorten (str "http://diogok.net/" n) )))) 
 
 
+
