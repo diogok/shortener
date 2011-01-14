@@ -1,0 +1,9 @@
+# shorten
+
+URL shortener in clojure.
+
+## License
+
+Copyright (C) 2010 diogok
+
+Distributed under the Eclipse Public License, the same as Clojure.
