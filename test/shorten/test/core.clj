@@ -3,13 +3,6 @@
   (:use [clojure.test :only  [is] ]) 
   (:use [lazytest.deftest :only [deftest ]]))
 
-    (deftest inc-next-ok
-     (is (= [1 0] (vec (inc-next [0 0]) )))
-     (is (= [0] (vec (inc-next []) )))
-     (is (= [1] (vec (inc-next [0])))) 
-     (is (= [0 0 0] (vec (inc-next [25 25])))) 
-     (is (= [0 1] (vec (inc-next [25 0])))) ) 
-
     (deftest next-urls
      (is (= "ab" (next-u "aa")))
      (is (= "ba" (next-u "az")))

@@ -3,7 +3,7 @@
  (:use compojure.core ring.adapter.jetty))
 
     (def *log*  "urls.aof") 
-(def *logger* (agent *log*)) 
+    (def *logger* (agent *log*)) 
 
     (defn log [url] 
      (with-open [wtr (writer *log* :append true)] 
@@ -13,25 +13,8 @@
      (with-open [rdr (reader *log*)]
       (dorun (map #(fun (decode-str %)) (line-seq rdr)))))
 
-    (defn inc-next-1 [nums & b]
-     (if (nil? (first nums)) (into b [0]) 
-      (if (= (first nums) 25)
-       (recur (next nums) (into b [0]))
-        (into b (into [(inc (first nums))] (next nums) )))))
-
-    (defn inc-next [nums]
-     (reverse (filter number? (inc-next-1 nums) ) )) 
-
-    (defn map-ints [s] 
-     (map #(- (int %1) 97) s)) 
-
-    (defn ints-map [ints] 
-     (reduce str "" (map #(char (+ %1 97)) ints)))  
-
-    (defn next-u [s] 
-     (reduce str ""
-      (reverse (ints-map
-        (inc-next (reverse (map-ints s)))))))
+    (defn next-u [s]
+     (Integer/toString (inc (Integer/parseInt s 36)) 36)) 
 
     (def short-to-long (ref {})) 
     (def long-to-short (ref {})) 
