@@ -1,4 +1,5 @@
 (ns shorten.core
+ (:use shorten.b62) 
  (:use clojure.java.io clojure.contrib.base64) 
  (:use compojure.core ring.adapter.jetty))
 
@@ -14,7 +15,7 @@
       (dorun (map #(fun (decode-str %)) (line-seq rdr)))))
 
     (defn next-u [s]
-     (Integer/toString (inc (Integer/parseInt s 36)) 36)) 
+     (number-to-b62 (inc (b62-to-number s)))) 
 
     (def short-to-long (ref {})) 
     (def long-to-short (ref {})) 
@@ -48,7 +49,7 @@
 
     (defn -main [& options]
      (let [ host (if (first options) (first options) "localhost")
-            port (if (second options) (Integer/parseInt (second options) ) 8080)
+            port (if (second options) (Integer/parseInt (second options)) 8080)
             config {:host host :port port :join? false} ] 
      (if-not (nil? @server) (.stop @server))
      (replay shorten) 
