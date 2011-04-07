@@ -1,7 +1,9 @@
 (ns shorten.core
+ (:gen-class) 
  (:use shorten.b62) 
  (:use clojure.java.io clojure.contrib.json) 
  (:use compojure.core ring.adapter.jetty)
+;; (:use lamina.core aleph.http) 
  (:require [redis.core :as redis]))
 
     (def server  (ref nil)) 
@@ -36,10 +38,16 @@
       (if-let [long-url url] 
         (str "http://" (@config :short-host) ":" (@config :port) "/" (shorten long-url))))) 
 
+    (defn n-app [channel request]
+     ) 
+
+
     (defn -main [& options]
      (dosync 
       (if (.exists (java.io.File. "config.json")) 
        (ref-set config (read-json (slurp "config.json")))) 
       (if-not (nil? @server) (.stop @server))
-      (ref-set server (run-jetty app @config))))
+      (ref-set server (run-jetty app @config)))
+    ;;  (start-http-server (wrap-ring-handler app) {:port 8081}) 
+     )
 
