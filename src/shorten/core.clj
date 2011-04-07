@@ -1,58 +1,45 @@
 (ns shorten.core
  (:use shorten.b62) 
- (:use clojure.java.io clojure.contrib.base64) 
- (:use compojure.core ring.adapter.jetty))
+ (:use clojure.java.io clojure.contrib.json) 
+ (:use compojure.core ring.adapter.jetty)
+ (:require [redis.core :as redis]))
 
-    (def *log*  "urls.aof") 
-    (def *logger* (agent *log*)) 
-
-    (defn log [url] 
-     (with-open [wtr (writer *log* :append true)] 
-       (spit wtr (str (encode-str url) "\n" ))))
-
-    (defn replay [fun] 
-     (with-open [rdr (reader *log*)]
-      (dorun (map #(fun (decode-str %)) (line-seq rdr)))))
+    (def server  (ref nil)) 
+    (def config  (ref {:host "0.0.0.0"
+                       :short-host "localhost"
+                       :port 8080 
+                       :redis {:host "localhost" :port 6379 :db 0}}))
 
     (defn next-u [s]
      (number-to-b62 (inc (b62-to-number s)))) 
 
-    (def short-to-long (ref {})) 
-    (def long-to-short (ref {})) 
-    (def last-url (ref "a")) 
-
-    (defn shorten [long-url]
-     (dosync 
-      (if-let [short-url (get @long-to-short long-url)] short-url 
-       (let [short-url (next-u @last-url)]
-        (send *logger* (fn [a] (log long-url))) 
-        (alter short-to-long #(assoc % short-url long-url)) 
-        (alter long-to-short #(assoc % long-url short-url)) 
-        (ref-set last-url short-url)))))
+   (defn shorten [long-url]
+    (redis/with-server (:redis @config) 
+     (let [short-url (next-u (redis/get "last-url"))]
+      (redis/atomically
+        (redis/set short-url long-url)
+        (redis/set "last-url" short-url))
+      short-url)))
 
     (defn unshorten [short-url]
-     (get @short-to-long short-url)) 
-
-    (def server (atom nil)) 
-    (def conf   (atom nil)) 
+     (redis/with-server (:redis @config) 
+      (redis/get short-url))) 
 
     (defroutes app 
      (GET  "/resolve/:url" [url]
       (let [short-url url]
-        (unshorten short-url) ) )
+        (unshorten short-url)))
      (GET  "/:url" [url]
       (let [short-url url]
-       {:status 301 :headers {"Location" (unshorten short-url) }} ))
+       {:status 301 :headers {"Location" (unshorten short-url)}}))
      (POST "/shorten" [url]
-      (let [long-url url] 
-        (str "http://" (@conf :host) ":" (@conf :port) "/" (shorten long-url) )))) 
+      (if-let [long-url url] 
+        (str "http://" (@config :short-host) ":" (@config :port) "/" (shorten long-url))))) 
 
     (defn -main [& options]
-     (let [ host (if (first options) (first options) "localhost")
-            port (if (second options) (Integer/parseInt (second options)) 8080)
-            config {:host host :port port :join? false} ] 
-     (if-not (nil? @server) (.stop @server))
-     (replay shorten) 
-     (swap! conf (fn [c] config)) 
-     (swap! server (fn [s] (run-jetty app config )))))
+     (dosync 
+      (if (.exists (java.io.File. "config.json")) 
+       (ref-set config (read-json (slurp "config.json")))) 
+      (if-not (nil? @server) (.stop @server))
+      (ref-set server (run-jetty app @config))))
 
