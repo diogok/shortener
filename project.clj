@@ -5,7 +5,7 @@
                   [redis-clojure "1.2.6-alpha4"] 
                   [ring/ring-core "0.3.5"] 
                   [ring/ring-jetty-adapter "0.3.5" ]
-;;                [aleph "0.1.5-SNAPSHOT"] 
+                  ;;[aleph "0.1.5-SNAPSHOT"] 
                   [compojure "0.5.3"]]
   :dev-dependencies [[com.stuartsierra/lazytest "2.0.0-SNAPSHOT"]] 
   :main shorten.core
